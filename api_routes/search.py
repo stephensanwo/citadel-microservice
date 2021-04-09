@@ -19,17 +19,16 @@ search_blueprint = Blueprint("search", __name__)
 
 
 @search_blueprint.route("/search", methods=["GET"])
-@require_apikey
+# @require_apikey
 def search():
     q = request.args["q"]
     search_type = request.args["search_type"]
 
     Books = search_book(q, search_type)
+    return make_response(jsonify(Books.records), int(Books.status["status_code"]))
 
-    newSearch = Search(query=q, search_type=search_type, search_ip=request.remote_addr,)
+    newSearch = Search(query=q, search_type=search_type, search_ip=request.remote_addr)
     newSearch.save()
 
     logger.error(f"API Key Authentication failed, Wrong API Client provided by user")
-
-    return make_response(jsonify(Books.records), int(Books.status["status_code"]))
 

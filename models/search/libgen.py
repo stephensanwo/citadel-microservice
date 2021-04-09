@@ -1,12 +1,13 @@
+import requests
 from logging import error
 import uuid
 from bs4 import BeautifulSoup
 from urllib.request import urlopen
+import urllib.request
 import os
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor as executor
 
 BASE_URL = os.environ.get("BASE_URL")
-
 
 def generate_search_url(req, search_type):
     """
@@ -27,24 +28,8 @@ def generate_search_url(req, search_type):
     }
 
     url = f"{BASE_URL}/search.php?&res={params['res']}&req={params['req']}&phrase=1&view={params['view']}&column={params['column']}&sort={params['sort']}&sortmode={params['sortmode']}&page={params['page']}"
-
+    print(url)
     return url
-
-
-def test_url(url):
-    """
-    test the generated url
-    @param url: generated search url
-    @return: boolean
-    """
-    try:
-        html = urlopen(url)
-        BeautifulSoup(html, "lxml")
-
-    except:
-        return False
-
-    return True
 
 
 def get_book_data(table):
@@ -133,8 +118,10 @@ def search_book(req, search_type):
 
     url = generate_search_url(req, search_type)
 
-    if test_url(url):
-        print("True")
+    try:
+        # r = urllib.request.urlretrieve(url)
+        # # r = requests.get(url, headers=headers, proxies=proxies )
+        # soup = BeautifulSoup(r.content, "lxml")
         html = urlopen(url)
         soup = BeautifulSoup(html, "lxml")
         tables = soup.find_all("table", rules="cols")
@@ -147,6 +134,7 @@ def search_book(req, search_type):
 
         else:
             tables = soup.find_all("table", rules="cols")
+            print(len(tables))
             for table in tables:
                 try:
                     Books.records.append(get_book_data(table))
@@ -155,8 +143,8 @@ def search_book(req, search_type):
 
                 except IndexError:
                     pass
-    else:
-        print("False")
+    except:
+     
         Books.status["status_code"] = 503
         Books.status["reason"] = "Service temporarily unavailable"
 
